@@ -51,11 +51,23 @@ def _safe_input(valid_choices: set[str], prompt: str = "Select an option: ") -> 
 _ALLOWED_USER_CHARS = set(
     "abcdefghijklmnopqrstuvwxyz0123456789_'."
 )
+_RESERVED_USERNAMES = {
+    "admin", "root", "superuser", "administrator", "test", "guest"
+}
+
 def is_valid_username(name: str) -> bool:
     name = name.lower()
-    print(f"Validating username: {name}")
-    print(8 <= len(name) <= 10 and(name[0].isalpha() or name[0] == "_") and all(ch in _ALLOWED_USER_CHARS for ch in name))
-    return (8 <= len(name) <= 10 and(name[0].isalpha() or name[0] == "_") and all(ch in _ALLOWED_USER_CHARS for ch in name))
+    if not (8 <= len(name) <= 10):
+        return False
+    if not (name[0].isalpha() or name[0] == "_"):
+        return False
+    if name.startswith(".") or name.endswith(".") or ".." in name or "__" in name:
+        return False
+    if name in _RESERVED_USERNAMES:
+        return False
+    if not all(ch in _ALLOWED_USER_CHARS for ch in name):
+        return False
+    return True
 
 def check_db_duplicate(username):
     conn = db.get_db_connection()
@@ -64,12 +76,17 @@ def check_db_duplicate(username):
     user = c.fetchone()
     return user is None
 
-# ─────────────────── PASSWORD ───────────────────
+# ─────────────────── PASSWORD ─────────────────── #
 
 _SPECIALS = set("~!@#$%&_-+=`|\\(){}[]:;'<>,.?/")
 def is_valid_password(pwd: str) -> bool:
     if not (12 <= len(pwd) <= 30):
         return False
+    if any(c.isspace() for c in pwd):
+        return False
+    if len(set(pwd)) <= 2:
+        return False
+
     kinds = {
         "lower": any(c.islower() for c in pwd),
         "upper": any(c.isupper() for c in pwd),
@@ -79,12 +96,19 @@ def is_valid_password(pwd: str) -> bool:
     if not all(kinds.values()):
         return False
 
-    return all(ch.isalnum() or ch in _SPECIALS for ch in pwd)
+    if not all(c.isalnum() or c in _SPECIALS for c in pwd):
+        return False
+
+    return True
 
 # ─────────────────────────────── PROMPTS ────────────────────────────── #
 
 def prompt_username():
+    attempts = 0
     while True:
+        if attempts >= 5:
+            print_colored("[!] Too many invalid attempts. Aborting.", "red")
+            return None
         try:
             name = input("Username (8-10 chars, a-z 0-9 _'.) [Q=cancel]: ").strip()
         except (KeyboardInterrupt, EOFError):
@@ -96,12 +120,18 @@ def prompt_username():
         if is_valid_username(name):
             if not check_db_duplicate(name):
                 print_colored("[!] Username already in use, try again.", "red")
+                attempts += 1
                 continue
             return name.lower()
         print_colored("[!] Invalid username, try again.", "red")
+        attempts += 1
 
 def prompt_password():
+    attempts = 0
     while True:
+        if attempts >= 5:
+            print_colored("[!] Too many invalid attempts. Aborting.", "red")
+            return None
         try:
             pwd = input("Password (12-30 chars, mix Aa1! ) [Q=cancel]: ").strip()
         except (KeyboardInterrupt, EOFError):
@@ -113,6 +143,7 @@ def prompt_password():
         if is_valid_password(pwd):
             return pwd
         print_colored("[!] Weak or invalid password, try again.", "red")
+        attempts += 1
 
 # ─────────────────────────────── HASH / ADD DB ────────────────────────────── #
 
@@ -152,16 +183,24 @@ def is_valid_name(name: str) -> bool:
     return name.isalpha() and 1 <= len(name) <= 30
 
 # ─────────────────────────────── add user profile ────────────────────────────── #
+def is_valid_name(name: str) -> bool:
+    name = name.strip()
+    return name.isalpha() and (1 <= len(name) <= 30)
 
-def get_user_profile_names(user_id):
+def get_user_profile_names(user_id=None):
+    attempts = 0
     while True:
+        if attempts >= 5:
+            print_colored("[!] Too many invalid attempts. Aborting.", "red")
+            return None, None
         try:
             first = input("Enter first name (1-30 letters only) [Q=cancel]: ").strip()
             if first.lower() == "q":
                 print_colored("[↩] BACK", "blue")
                 return None, None
             if not is_valid_name(first):
-                print_colored("[!] Invalid first name. Letters only, max 30 characters.", "red")
+                print_colored("[!] Invalid first name. Letters only, 1–30 characters, no blanks.", "red")
+                attempts += 1
                 continue
 
             last = input("Enter last name (1-30 letters only) [Q=cancel]: ").strip()
@@ -169,7 +208,8 @@ def get_user_profile_names(user_id):
                 print_colored("[↩] BACK", "blue")
                 return None, None
             if not is_valid_name(last):
-                print_colored("[!] Invalid last name. Letters only, max 30 characters.", "red")
+                print_colored("[!] Invalid last name. Letters only, 1–30 characters, no blanks.", "red")
+                attempts += 1
                 continue
 
             return first, last
