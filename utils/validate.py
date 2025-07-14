@@ -74,7 +74,7 @@ def is_valid_house_number(housenumber: str) -> bool:
         return False
     if housenumber.isdigit() and int(housenumber) > 0:
         return True
-    if len(housenumber) > 1 and housenumber[:-1].isdigit() and housenumber[-1].isalpha():
+    if len(housenumber) > 1 and housenumber[:-1].isdigit() and int(housenumber[:-1]) > 0 and housenumber[-1].isalpha():
         return True
     return False
 
