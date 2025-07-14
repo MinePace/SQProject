@@ -262,7 +262,7 @@ def add_scooter(user):
                 utils.remove_last_line()
                 continue
         else:
-            utils.print_colored("[!] Invalid Speed should. It should be a number.", "red")
+            utils.print_colored("[!] Invalid Speed. It should be a number.", "red")
             time.sleep(1)
             utils.remove_last_line()
             continue
