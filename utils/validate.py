@@ -58,6 +58,8 @@ def is_valid_charge_state(charge_state: str) -> bool:
         return False
     
 def is_valid_email(email: str) -> bool:
+    if not email or "@" not in email:
+        return False
     local_part, domain = email.split("@")
     return (
         "@" in email and 

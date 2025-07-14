@@ -29,7 +29,7 @@ def scooter_data_menu(user):
                 print("5. [s] Search for Scooters")
                 utils.print_colored("6. [q] Quit to Main Menu", "blue")
                 choice = input("\nSelect an option: ").strip()
-                if choice not in se_choices:
+                if choice not in choices:
                     utils.print_colored("\n[!] Invalid option. Please try again.", "red")
                     time.sleep(0.5)
                     continue
@@ -42,7 +42,7 @@ def scooter_data_menu(user):
                 print("3. [s] Search for Scooters")
                 utils.print_colored("4. [q] Quit to Main Menu", "blue")
                 choice = input("\nSelect an option: ").strip()
-                if choice not in choices:
+                if choice not in se_choices:
                     utils.print_colored("\n[!] Invalid option. Please try again.", "red")
                     time.sleep(0.5)
                     continue
@@ -222,23 +222,23 @@ def add_scooter(user):
 
     while True:
         brand = input("Brand: ").strip()
-        if brand is None or brand == "":
+        if len(brand) < 50 and brand != "":
+            break
+        else:
             utils.print_colored("[!] Brand cannot be empty.", "red")
             time.sleep(1)
             utils.remove_last_line()
             continue
-        else:
-            break
 
     while True:
         model = input("Model: ").strip()
-        if model is None or model == "":
+        if len(model) < 50 and model != "":
+            break
+        else:
             utils.print_colored("[!] Model cannot be empty.", "red")
             time.sleep(1)
             utils.remove_last_line()
             continue
-        else:
-            break
 
     while True:
         serial_number = input("Serial Number: ").strip()
